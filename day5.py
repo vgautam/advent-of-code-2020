@@ -46,3 +46,7 @@ for row_dirs, col_dirs in row_col_dirs:
 print(max(seat_ids))
 
 print('part 2')
+#print(range(min(seat_ids), max(seat_ids)+1))
+for seat in range(min(seat_ids)+1, max(seat_ids)+2):
+    if seat not in seat_ids and seat-1 in seat_ids and seat+1 in seat_ids:
+        print(seat)
