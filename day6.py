@@ -1,22 +1,6 @@
 #!/usr/bin/env python3
 from functools import reduce
 
-print('part 1')
-num_yeses = []
-with open('2020day6input', 'r', encoding='utf-8') as fo:
-    lines = fo.read().strip().split('\n\n')
-    for line in lines:
-        num_yeses.append(len(set(''.join(line.split()))))
-print(sum(num_yeses))
-
-print('part 2')
-num_yeses = []
-with open('2020day6input', 'r', encoding='utf-8') as fo:
-    lines = fo.read().strip().split('\n\n')
-    for line in lines:
-        yeses = []
-        for person in line.split():
-            yeses.append(set(person))
-            #print(yeses)
-        num_yeses.append(len(reduce(lambda a, b: a.intersection(b), yeses)))
-print(sum(num_yeses))
+groups = [[set(p) for p in g.split()] for g in open('2020day6input').read().strip().split('\n\n')]
+print(f'part 1\n{sum([len(reduce(lambda a, b: a.union(b), group)) for group in groups])}')
+print(f'part 2\n{sum([len(reduce(lambda a, b: a.intersection(b), group)) for group in groups])}')
