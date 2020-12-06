@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import re
 required_keys = {'byr', 'iyr', 'eyr', 'hgt', 'hcl', 'ecl', 'pid'}
 optional_keys = {'cid'}

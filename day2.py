@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 password_rule_mapping = []
 
 with open('2020day2input', 'r', encoding='utf-8') as fo:

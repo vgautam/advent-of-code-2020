@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 numbers = []
 with open('2020day1input', 'r', encoding='utf-8') as fo:
     for line in fo:
