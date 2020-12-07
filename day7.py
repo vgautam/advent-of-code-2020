@@ -1,11 +1,22 @@
 #!/usr/bin/env python3
-
 import re
+from collections import defaultdict
 
 rules = {}
+contained_by_rules = defaultdict(set)
+contains_rules = {}
 for line in open('2020day7input'):
-    v = [m.group(2) for m in re.finditer('(\d+) (\w+ \w+)', line) for n in range(int(m.group(1)))]
-    rules[re.match('^\w+ \w+', line).group()] = v
+    bag = re.match('^\w+ \w+', line).group()
+    items = [m.group(2) for m in re.finditer('(\d+) (\w+ \w+)', line) for n in range(int(m.group(1)))]
+    rules[bag] = items
+    items = {m.group(2): int(m.group(1)) for m in re.finditer('(\d+) (\w+ \w+)', line)}
+    #print(items)
+    contains_rules[bag] = items
+    for item in items:
+        contained_by_rules[item].add(bag)
+
+#print(contained_by_rules)
+#print(contains_rules)
 
 def get_bags_containing(bag):
     return {k for k in rules if bag in rules[k]}
