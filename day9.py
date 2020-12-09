@@ -1,52 +1,28 @@
 #!/usr/bin/env python3
 
-from itertools import chain, combinations
+lines = [int(l) for l in open('2020day9input').read().split()]
 
-lines = [int(l) for l in open('2020day9input').read().split()] # every word
-#lines = [int(l) for l in open('test').read().split()] # every word
-#lines = open('2020day9input').readlines() # every line + \n
-#lines = [l.strip() for l in open('2020day9input')] # every line
-#lines = [l.strip() for l in open('2020day9input').read().split('\n\n')] # every block separated by 2 newlines
-#lines = [l.split() for l in open('2020day9input').read().split('\n\n')] # every block separated by 2 newlines, split into words
-
-print('part 1')
-def possible_sum(options, _sum):
-    print(options, _sum)
-    for i in range(len(options)):
-        for j in range(len(options)):
-            #print(i, j)
-            if i != j and options[i] + options[j] == _sum:
-                return True
+def is_sum_possible(options, _sum):
+    for i in options:
+        if _sum - i in set(options) and _sum - i != i:
+            return True
     return False
 
-#print(lines)
-#print(len(lines))
 stepsize = 25
-for i in range(stepsize, len(lines), 1):
-    print(i)
-    if not possible_sum(lines[i-stepsize:i], lines[i]):
-        print(lines[i])
+for i in range(stepsize, len(lines)):
+    if not is_sum_possible(lines[i-stepsize:i], lines[i]):
+        imposs_idx = i
+        imposs_num = lines[imposs_idx]
         break
+print(f'part 1: {imposs_num}')
 
-
-print('part 2')
-
-def powerset(iterable):
-    s = list(iterable)
-    length = len(s)
+def get_contiguous_sublists(numbers):
+    length = len(numbers)
     for i in range(length):
-        for j in range(length):
-            yield s[i:j+1]
+        for j in range(i+1, length):
+            yield numbers[i:j+1]
 
-def contiguous_sum(options, _sum):
-    if sum(options) == _sum:
-        return True
-    return False
-
-#print(powerset(lines[:534]))
-for i in powerset(lines[:534]):
-    if contiguous_sum(i, 36845998):
-        print(i)
+for options in get_contiguous_sublists(lines[:imposs_idx]):
+    if sum(options) == imposs_num:
+        print(f'part 2: {min(options) + max(options)}')
         break
-
-print(min(i) + max(i))
