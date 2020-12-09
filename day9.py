@@ -4,7 +4,7 @@ lines = [int(l) for l in open('2020day9input').read().split()]
 
 def is_sum_possible(options, _sum):
     for i in options:
-        if _sum - i in set(options) and _sum - i != i:
+        if _sum - i in options and _sum - i != i:
             return True
     return False
 
@@ -16,13 +16,16 @@ for i in range(stepsize, len(lines)):
         break
 print(f'part 1: {imposs_num}')
 
-def get_contiguous_sublists(numbers):
+def get_continuous_sublist(numbers, target_sum):
     length = len(numbers)
     for i in range(length):
         for j in range(i+1, length):
-            yield numbers[i:j+1]
+            options = numbers[i:j+1]
+            _sum = sum(options)
+            if _sum == target_sum:
+                return options
+            if _sum > target_sum:
+                break
 
-for options in get_contiguous_sublists(lines[:imposs_idx]):
-    if sum(options) == imposs_num:
-        print(f'part 2: {min(options) + max(options)}')
-        break
+sublist = get_continuous_sublist(lines[:imposs_idx], imposs_num)
+print(f'part 2: {min(sublist) + max(sublist)}')
