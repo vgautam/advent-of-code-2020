@@ -4,7 +4,7 @@ lines = [int(l) for l in open('2020day9input').read().split()]
 
 def is_sum_possible(options, _sum):
     for i in options:
-        if _sum - i in options and _sum - i != i:
+        if _sum - i in options:
             return True
     return False
 
