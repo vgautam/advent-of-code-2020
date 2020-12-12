@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import re
 
-passports = [{f.split(':')[0]: f.split(':')[1] for f in p.split()} for p in open('2020day4input').read().split('\n\n')]
+passports = [{f.split(':')[0]: f.split(':')[1] for f in p.split()} for p in open('2020day04input').read().split('\n\n')]
 valid_passports = [p for p in passports if {'byr', 'iyr', 'eyr', 'hgt', 'hcl', 'ecl', 'pid'}.issubset(p.keys())]
 print(f'part 1\n{len(valid_passports)}')
 

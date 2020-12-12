@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from functools import reduce
 
-map_grid = [list(line.strip()) for line in open('2020day3input')]
+map_grid = [list(line.strip()) for line in open('2020day03input')]
 map_height = len(map_grid)
 map_width = len(map_grid[0])
 

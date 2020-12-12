@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 numbers = []
-with open('2020day1input', 'r', encoding='utf-8') as fo:
+with open('2020day01input', 'r', encoding='utf-8') as fo:
     for line in fo:
         numbers.append(int(line.strip()))
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-instructions = [l for l in open('2020day8input').readlines()]
+instructions = [l for l in open('2020day08input').readlines()]
 
 def computer(instructions, swap=-1):
     accumulator = 0

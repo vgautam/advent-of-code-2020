@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-lines = [int(l) for l in open('2020day9input').read().split()]
+lines = [int(l) for l in open('2020day09input').read().split()]
 
 def is_sum_possible(options, _sum):
     for i in options:

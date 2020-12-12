@@ -3,7 +3,7 @@
 import re
 
 rules = {}
-for line in open('2020day7input'):
+for line in open('2020day07input'):
     v = [m.group(2) for m in re.finditer('(\d+) (\w+ \w+)', line) for n in range(int(m.group(1)))]
     rules[re.match('^\w+ \w+', line).group()] = v
 

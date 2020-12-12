@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
 
 lines = open('2020day12input').read().split() # every word
-#lines = open('test').read().split() # every word
-#lines = open('2020day7input').readlines() # every line + \n
-#lines = [l.strip() for l in open('2020day7input')] # every line
-#lines = [l.strip() for l in open('2020day7input').read().split('\n\n')] # every block separated by 2 newlines
-#lines = [l.split() for l in open('2020day7input').read().split('\n\n')] # every block separated by 2 newlines, split into words
 
-#print(lines)
 print('part 1')
 
 def turn(facing, direction, magnitude):
