@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 
-numbers = []
-with open('2020day01input', 'r', encoding='utf-8') as fo:
-    for line in fo:
-        numbers.append(int(line.strip()))
+numbers = [int(l.strip()) for l in open('2020day01input')]
 
-print('part 1')
-for i in numbers:
-    for j in numbers:
-        if i + j == 2020:
-            print(i*j)
+def part1(numbers, target_sum):
+    for n in numbers:
+        if target_sum - n in numbers:
+            return n * (target_sum - n)
 
-print('part 2')
-for i in numbers:
-    for j in numbers:
-        for k in numbers:
-            if i + j + k == 2020:
-                print(i*j*k)
+print('part1:', part1(numbers, 2020))
+
+def part2(numbers, target_sum):
+    for n in numbers:
+        res = part1(numbers, target_sum - n)
+        if res:
+            return n * res
+
+print('part2:', part2(numbers, 2020))
