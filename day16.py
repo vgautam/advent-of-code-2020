@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import re
+from functools import reduce
 
 day=16 # update me
 inp_f = f'2020day{day:02d}input'
@@ -46,4 +47,24 @@ for ticket in other_tickets:
 print(error_rate)
 
 print('part 2')
+def try_col(key, values):
+    ranges = valid_ranges[key]
+    for val in values:
+        if not (int(val) in ranges[0] or int(val) in ranges[1]):
+            return False
+    return True
 
+tickets = valid_tickets
+col_mapping = {}
+while len(col_mapping) < len(tickets[0]):
+    for i in range(len(tickets[0])):
+        values = [ticket[i] for ticket in tickets]
+        candidate_cols = []
+        for key in valid_ranges:
+            if key not in col_mapping and try_col(key, values):
+                candidate_cols.append(key)
+        if len(candidate_cols) == 1:
+            col_mapping[candidate_cols[0]] = i
+
+indices = [col_mapping[key] for key in col_mapping if 'departure' in key]
+print(reduce(lambda a,b: a*b, [int(my_ticket[index]) for index in indices]))
