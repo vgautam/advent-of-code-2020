@@ -5,7 +5,7 @@
 %}
 
 %%
-[0-9]+	{ yylval.number=atoi(yytext); return NUM; } /* atoi(yytext); */
+[0-9]+	{ yylval.number=atol(yytext); return NUM; }
 \(	return OPEN_PAREN;
 \)	return CLOSE_PAREN;
 \+	return ADD;

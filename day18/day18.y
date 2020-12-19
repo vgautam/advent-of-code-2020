@@ -12,22 +12,21 @@ void yyerror(const char *str)
     printf("%s: line %d, token %d\n", str, yylineno, yychar);
 }
 
-int sum = 0;
+long long sum = 0;
 
 int main()
 {
-    int sum = 0;
     yyparse();
-    /* printf("%d", sum); */
 }
 %}
 
 %token OPEN_PAREN CLOSE_PAREN ADD MUL NEWLINE
-%left	ADD MUL
+%left	MUL
+%left	ADD
 
 %union
 {
-    int number;
+    long long number;
 }
 
 %token <number> NUM;
@@ -38,10 +37,10 @@ int main()
 homework:
     | problem homework
     {
-        int answer = $1;
-        /* printf("%d\n", answer); */
+        long long answer = $1;
+        /* printf("%lld\n", answer); */
         sum += answer;
-        printf("%d\n", sum);
+        printf("%lld\n", sum);
     }
     ;
 
