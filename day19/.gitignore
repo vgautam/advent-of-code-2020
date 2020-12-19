@@ -1,3 +1,5 @@
 *.lexer
 *.parser
 *.rules
+*.messages
+*.out
