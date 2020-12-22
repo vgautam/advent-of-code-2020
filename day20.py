@@ -26,6 +26,15 @@ inp_f = 'test'
 # or 4 sides (depending on whether it's an edge, corner or middle tile
 # Could I prune out some flip/rotate combos using this? would it even help?
 
+# day 3 notes
+# i have 5 mins to look at this again - I realized that keeping all possible flips and orientations
+# of every tile is a bad idea because tiles will often seem to "fit with" themselves and it
+# overcomplicates the problem
+# how the fuck do you constrain it within the square grid? like what if i just daisy chained tiles
+# that match on an edge but they went on forever in one direction without stopping
+# surely, SURELY, this isn't brute forceable. That's why i haven't even bothered to try it.
+# is it tractable to fix the 4 corner tiles and then go from there and see if things break?
+
 op_types = set(product(['r1', 'r2', 'r3'], ['vf', 'hf'])) | set(product(['vf', 'hf'], ['r1', 'r2', 'r3'])) | {('vf',), ('hf',), ('r1',), ('r2',), ('r3',)}
 print(op_types)
 print(len(op_types))
@@ -62,12 +71,12 @@ for t in tiles_raw:
     edge4 = ''.join([r[-1] for r in t[2:]])
     edges = [edge1, edge2, edge3, edge4]
     edges = [e.replace('#', '1').replace('.', '0') for e in edges]
-    tiles[tile_id] = [edges, []]
-    for ops in op_types:
-        alt_tile = modify(edges, ops)
-        for e in alt_tile:
-            suffix = '_' + '_'.join(ops) if ops else ''
-            seen_dict[e].add(tile_id + suffix)
+    tiles[tile_id] = [edges, [None, None, None, None]]
+    #for ops in op_types:
+    #    alt_tile = modify(edges, ops)
+    #    for e in alt_tile:
+    #        suffix = '_' + '_'.join(ops) if ops else ''
+    #        seen_dict[e].add(tile_id + suffix)
     print(tile_id, edges)
     assert edges == hflip(hflip(edges))
     assert edges == vflip(vflip(edges))
@@ -84,6 +93,26 @@ def get_smolest_resolvable_case(seen_dict, max_tiles=1):
 #print([(k,v) for k,v in seen_dict.items() if len(v) == 7])
 print(get_smolest_resolvable_case(seen_dict, 2))
 print(len(get_smolest_resolvable_case(seen_dict, 2)))
+
+# day 3 fuckery - am i going anywhere with this?
+
+def xor(edge_pair):
+    edge1 = int(edge_pair[0], 2)
+    edge2 = int(edge_pair[1], 2)
+    return edge1 ^ edge2 == 0b0
+
+for tile in tiles:
+    for other_tile in set(tiles.keys()) - {tile}:
+        pairs = product(tiles[tile][0], tiles[other_tile][0])
+        for pair in pairs:
+            if xor(pair):
+                # oof, gross af - good place for named tuples, mayhaps?
+                # also note that index() means you only get the first matching edge, won't work
+                # well if you have multiple tile edges with the same value
+                tiles[tile][1][tiles[tile][0].index(pair[0])] = other_tile
+                print(f'{tile} has a match with {other_tile} ({pair})')
+
+print(tiles)
 
 print('part 1')
 
