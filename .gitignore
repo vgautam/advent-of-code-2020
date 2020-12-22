@@ -1,0 +1,11 @@
+**/test*
+
+# lex and yacc stuff
+**/*.lexer
+**/*.parser
+**/*.rules
+**/*.messages
+**/*.out
+**/*.yy.c
+**/*.tab*
+**/*.output
