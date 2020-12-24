@@ -26,6 +26,33 @@ for l in lines:
     tile_colours[coords] = 1 ^ tile_colours[coords]
 
 print('part 1')
-print(sum([1 for t in tile_colours if tile_colours[t] == 1]))
+print(sum(list(tile_colours.values())))
 
 print('part 2')
+def new_colour(coords, tile_colours):
+    colour = tile_colours[coords]
+    neighbour_coords = [apply(coords, shift) for shift in mappings.values()]
+    # n = number of black neighbouring tiles
+    n = sum([tile_colours[c] for c in neighbour_coords if c in tile_colours])
+    if colour == 1 and (n == 0 or n > 2):
+        return 0
+    if colour == 0 and n == 2:
+        return 1
+    return colour
+
+def simulate(tile_colours):
+    new_tile_colours = defaultdict(lambda: 0)
+    for coords in tile_colours:
+        new_tile_colours[coords] = new_colour(coords, tile_colours)
+    assert len(tile_colours.keys()) == len(new_tile_colours.keys())
+    return new_tile_colours
+
+for i in range(100):
+    for coords in list(tile_colours.keys()):
+        neighbour_coords = [apply(coords, shift) for shift in mappings.values()]
+        for c in neighbour_coords:
+            if c not in tile_colours:
+                tile_colours[c] = 0
+    tile_colours = simulate(tile_colours)
+
+print(sum(list(tile_colours.values())))
