@@ -6,7 +6,7 @@ from collections import defaultdict
 
 day=20 # update me
 inp_f = f'2020day{day:02d}input'
-inp_f = 'test'
+#inp_f = 'test'
 
 op_types = set(product(['r1', 'r2', 'r3'], ['vf', 'hf'])) | set(product(['vf', 'hf'], ['r1', 'r2', 'r3'])) | {('vf',), ('hf',), ('r1',), ('r2',), ('r3',)}
 
@@ -50,33 +50,34 @@ for t in tiles_raw:
     assert edges == vflip(vflip(edges))
     assert edges == rotate(rotate(rotate(rotate(edges))))
 
-#print(tiles)
-
 def xor(edge_pair):
     edge1 = int(edge_pair[0], 2)
     edge2 = int(edge_pair[1], 2)
     return edge1 ^ edge2 == 0b0
 
-for corners in combinations(tiles.keys(), 4):
-    available_tiles = tiles.keys() - set(corners)
-    good_corners = []
-    for corner in corners:
-        edges = tiles[corner][0]
-        matched_edges = set()
+candidate_corners = []
+for corner in tiles:
+    available_tiles = tiles.keys() - {corner}
+    good_orientations = []
+    # diff orientations of the candidate corner tile
+    for i,edges in enumerate(tiles[corner]):
+        matched_edges = {}
         for other_tile in available_tiles:
             for orientation in tiles[other_tile]:
                 pairs = product(edges, orientation)
                 for pair in pairs:
                     if xor(pair):
-                        #print(f'{corner} has a match with {other_tile} ({pair})')
-                        matched_edges.add(pair)
-        if len(matched_edges) == 2:
-            good_corners.append(corner)
-    if len(good_corners) == 4:
-        print('we have a winner!')
-        print(reduce(lambda a,b: int(a)*int(b), good_corners))
-
+                        matched_edges[pair] = other_tile
+            if len(matched_edges) > 2:
+                break
+        if len(matched_edges) == 2 and len(set(matched_edges.values())) == 2:
+            good_orientations.append(edges)
+        if len(good_orientations) < i:
+            break
+    if len(good_orientations) == len(tiles[corner]):
+        candidate_corners.append(corner)
 
 print('part 1')
+print(reduce(lambda a,b: int(a)*int(b), candidate_corners))
 
 print('part 2')
