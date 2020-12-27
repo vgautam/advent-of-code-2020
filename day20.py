@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# please, if you want to maintain some level of respect for me, do not look at this
-
 from itertools import product
 from itertools import combinations
 from functools import reduce
@@ -13,6 +11,9 @@ day=20 # update me
 inp_f = f'2020day{day:02d}input'
 inp_f = 'test'
 
+#   0
+# 3 [] 1
+#   2
 op_types = set(product(['r1', 'r2', 'r3'], ['vf', 'hf'])) | set(product(['vf', 'hf'], ['r1', 'r2', 'r3'])) | {('vf',), ('hf',), ('r1',), ('r2',), ('r3',)}
 
 def modify(tile, ops):
@@ -27,14 +28,11 @@ def modify(tile, ops):
             new_tile = [t[::-1] for t in new_tile]
     return new_tile
 
-#   1
-# 4 [] 2
-#   3
 def get_edges(tile):
-    yield tile[0]
-    yield ''.join([r[-1] for r in tile[0:]])
-    yield tile[-1]
-    yield ''.join([r[0] for r in tile[0:]])
+    return [tile[0],
+            ''.join([r[-1] for r in tile[0:]]),
+            tile[-1],
+            ''.join([r[0] for r in tile[0:]])]
 
 tiles_raw = [l.split() for l in open(inp_f).read().split('\n\n')]
 tiles = {}
@@ -46,212 +44,162 @@ for t in tiles_raw:
         alt_tile = modify(tile, ops)
         if alt_tile not in tiles[tile_id]:
             tiles[tile_id].append(alt_tile)
-    print(len(tiles[tile_id]))
 
-def get_tiles(tiles, num_matching):
-    candidate_corners = {}
-    for corner in tiles:
-        available_tiles = tiles.keys() - {corner}
-        good_orientations = []
-        # diff orientations of the candidate corner tile
-        for i,edges in enumerate(tiles[corner]):
-            matched_edges = {}
-            for other_tile in available_tiles:
-                for orientation in tiles[other_tile]:
-                    for x in get_edges(edges):
-                        if x in get_edges(orientation):
-                            matched_edges[x] = other_tile
-                            break
-                if len(matched_edges) > num_matching:
-                    break
-            if len(matched_edges) == num_matching and len(set(matched_edges.values())) == num_matching:
-                good_orientations.append(edges)
-            if len(good_orientations) < i:
-                break
-        if len(good_orientations) == len(tiles[corner]):
-            candidate_corners[corner] = matched_edges.values()
-    return candidate_corners
+# If I started with a sensible tile edge convention, I could probably have avoided this
+def opp_edge(i):
+    mapping = {1: 3, 0: 2, 2: 0, 3: 1}
+    return mapping[i]
 
-print('part 1')
-candidate_corners = get_tiles(tiles, 2)
-candidate_borders = get_tiles(tiles, 3)
-print(reduce(lambda a,b: int(a)*int(b), candidate_corners))
+def create_map():
+    gigantic_map = {}
+    for tile in tiles:
+        for o_num, orientation in enumerate(tiles[tile]):
+            edges = get_edges(orientation)
+            orientation_map = {}
+            for other_tile in set(tiles.keys())-{tile}:
+                for other_orientation in tiles[other_tile]:
+                    other_edges = get_edges(other_orientation)
+                    for i,edge in enumerate(edges):
+                        if other_edges[opp_edge(i)] == edge:
+                            orientation_map[i] = (other_tile, other_orientation)
+            gigantic_map[(tile, o_num)] = orientation_map
+    return gigantic_map
 
-#   0
-# 3 [] 1
-#   2
-def get_neighbours(tiles, orientations, pool, missing_neighbours):
-    res = []
-    for orientation in orientations:
-        orientation_neighbours = [None, None, None, None]
-        for other_tile in pool:
-            for o_i,other_orientation in enumerate(tiles[other_tile]):
-                for i,x in enumerate(get_edges(orientation)):
-                    if x in get_edges(other_orientation):
-                        orientation_neighbours[i] = (other_tile, other_orientation)
-        found_neighbours = [i for i,c in enumerate(orientation_neighbours) if c is not None]
-        neighbour_tiles = [x[0] for x in orientation_neighbours if x]
-        assert len(neighbour_tiles) == len(set(neighbour_tiles))
-        if [i for i in missing_neighbours if i in found_neighbours] == missing_neighbours:
-            print(missing_neighbours, found_neighbours)
-            res.append((orientation, orientation_neighbours))
-    return res
+gigantic_map = create_map()
+#print(gigantic_map)
 
-def get_neighbour_coords(coords, direction=None):
-    mapping = [(coords[0]-1,coords[1]),
-               (coords[0],coords[1]+1),
-               (coords[0]+1,coords[1]),
-               (coords[0],coords[1]-1)]
-    if direction:
-        return mapping[direction]
-    return mapping
-
-def valid(image_raw, coords):
-    return coords[0] >= 0 and coords[1] >= 0 and coords[1] < len(image_raw) and coords[0] < len(image_raw)
-
-def get_missing_neighbours(image_raw, coords):
-    missing = []
-    for i, (x,y) in enumerate(get_neighbour_coords(coords)):
-        if valid(image_raw, (x,y)) and image_raw[x][y] is None:
-            missing.append(i)
-    return missing
+corners = []
+for tile in tiles:
+    # unclear if it's necessary to check every orientation, but i'm doing it to be safe
+    for o_num in range(len(tiles[tile])):
+        if len(gigantic_map[(tile, o_num)]) == 2:
+            corners.append(tile)
+print(reduce(lambda a,b: int(a)*int(b), list(set(corners))))
 
 img_ht = int(sqrt(len(tiles)))
+rowlen = 10
 image_tiles = [[None for i in range(img_ht)] for j in range(img_ht)]
 image_raw = [[None for i in range(img_ht)] for j in range(img_ht)]
-tile = list(candidate_corners.keys())[0]
-for (x,y) in product(range(img_ht), range(img_ht)):
-    if image_raw[x][y]:
-        tile = image_tiles[x][y]
-    orientations = tiles[tile]
-    if image_raw[x][y]:
-        orientations = [image_raw[x][y]]
-    print(image_tiles)
-    pool = set(tiles.keys()) - {tile}
-    missing_neighbours = get_missing_neighbours(image_raw, (x,y))
-    grrr = False
-    nb_i = 0
-    neighbour_opts = get_neighbours(tiles, orientations, pool, missing_neighbours)
-    while not grrr:
-        try:
-            orientation, neighbours = neighbour_opts[nb_i][0], neighbour_opts[nb_i][1]
-        except IndexError:
-            print('ERROR')
-            print('nbi', nb_i)
-            #print(orientations)
-            print(tile, pool)
-            #print([tiles[p] for p in pool])
-            #print(missing_neighbours)
-            raise IndexError
-        neighbour_coords = get_neighbour_coords((x,y))
-        print(neighbour_coords)
-        grrrs = []
-        for direction, (a,b) in enumerate(neighbour_coords):
-            if not valid(image_raw, (a,b)):
+
+tile_id = corners[0] # entirely arbitrary choice
+for o_num in range(len(tiles[tile_id])):
+    matching_edges = [k for k,v in gigantic_map[(tile_id, o_num)].items()]
+    # not so arbitrary, given that i'm starting the map with this
+    if matching_edges == [1,2]:
+        tile = tiles[tile_id][o_num]
+        tile_id = (tile_id, o_num)
+        break
+
+# yes, i could generator this but i don't want to for reasons
+def get_valid_neighbour_coords(image_raw, coords):
+    candidates = [(coords[0]-1,coords[1]),
+                  (coords[0],coords[1]+1),
+                  (coords[0]+1,coords[1]),
+                  (coords[0],coords[1]-1)]
+    valid = []
+    for x,y in candidates:
+        if x >= 0 and y >= 0 and x < len(image_raw) and y < len(image_raw):
+            valid.append((x,y))
+        else:
+            valid.append(None)
+    return valid
+
+print('valid', get_valid_neighbour_coords(image_raw, (0,0)))
+print('valid', get_valid_neighbour_coords(image_raw, (1,0)))
+
+def get_current_neighbours(image_raw, coords):
+    neighbours = [None, None, None, None]
+    for i,c in enumerate(get_valid_neighbour_coords(image_raw, coords)):
+        if c is not None:
+            (x,y) = c
+            neighbours[i] = image_raw[x][y]
+    return neighbours
+
+def get_missing_positions(image_raw, coords):
+    return [i for i,pos in enumerate(get_valid_neighbour_coords(image_raw, coords)) if pos is not None and image_raw[pos[0]][pos[1]] is None]
+
+def get_neighbours_from_edge_map(edge_map):
+    neighbours = [None, None, None, None]
+    for direction, neighbour in edge_map.items():
+        if neighbour != None:
+            neighbour_tile_id, neighbour_tile = neighbour
+            neighbours[direction] = (neighbour_tile_id, neighbour_tile)
+    return neighbours
+
+# constraints of the form [None, <some-orientation>, <other-orientation>, None], etc.
+def get_all_neighbours(orientations, constraints, options, missing):
+    valid_os = [i for i in orientations]
+    neighbours = []
+    for tile_id, o_num in orientations:
+        edge_map = gigantic_map[(tile_id, o_num)]
+        matching_edges = {k: v[1] for k,v in edge_map.items()}
+        for i,constraint in enumerate(constraints):
+            # this lets me treat borders as constraints
+            if constraint is None:
                 continue
-            nbd = neighbours[direction]
-            print(neighbours)
-            if neighbours[direction] is None or (image_tiles[a][b] is not None and nbd != image_tiles[a][b]):
-                print('grrr', tile, nbd)
-                grrrs.append(True) # why am i like this
-        if not any(grrrs):
-            print('no grrrs!')
-            break
-        nb_i += 1
-    image_raw[x][y] = orientation
-    image_tiles[x][y] = tile
-    for i,direction in enumerate(missing_neighbours):
-        if i == 0:
-            tile = neighbours[direction][0]
-        (x_, y_) = get_neighbour_coords((x,y), direction=direction)
-        #print('ruh roh', image_tiles[x][y], neighbours)
-        image_tiles[x_][y_] = neighbours[direction][0]
-        image_raw[x_][y_] = neighbours[direction][1]
+            if i not in matching_edges or matching_edges[i] != constraint:
+                valid_os.remove(o_num)
+                break
+        for i in missing:
+            # need to find something here that fits
+            if i not in matching_edges and o_num in valid_os:
+                valid_os.remove(o_num)
+    assert valid_os
+    return valid_os[0], get_neighbours_from_edge_map(gigantic_map[valid_os[0]])
 
-        # fugly, clean up later
-        # 2 hrs later: This entire file is nasty. Clean it tf up (or throw it out?)
+def print_image(image_raw):
+    image = []
+    for row_raw in image_raw:
+        row = []
+        for t_raw in row_raw:
+            if t_raw:
+                row.append(t_raw)
+            else:
+                row.append(['?'*rowlen for _ in range(rowlen)])
+        image.append(row)
+    pic = []
+    for row in image:
+        curr_row = ''
+        for i in range(len(row[0])):
+            for tile in row:
+                curr_row += ''.join([tile[i]])
+                curr_row += ' '
+            curr_row += '\n'
+        pic.append(curr_row)
+    print('\n'.join(pic))
 
-image = []
-for row_raw in image_raw:
-    row = []
-    for t_raw in row_raw:
-        tile = []
-        for t_row in t_raw[1:-1]: # oof, this fucking naming
-            tile.append(t_row[1:-1])
-        row.append(tile)
-    image.append(row)
+# horrible, hacky, this file is slowly getting nasty again
+def get_tile_onum(tile_id, tile):
+    for o_num,_tile in enumerate(tiles[tile_id]):
+        if tile == _tile:
+            return o_num
 
-pic = []
-for row in image:
-    for i in range(len(row[0])):
-        pic.append(''.join([tile[i] for tile in row]))
+def part2(image_raw, image_tiles, tile_ident, tile):
+    tile_id, o_num = tile_ident
+    for (x,y) in product(range(img_ht), range(img_ht)):
+        orientations = [(tile_id, o_num) for o_num in range(len(tiles[tile_id]))]
+        if image_raw[x][y] is None:
+            image_raw[x][y] = tile
+            image_tiles[x][y] = (tile_id, o_num)
+        else:
+            tile = image_raw[x][y]
+            tile_id, o_num = image_tiles[x][y]
+        orientations = [(tile_id, o_num)]
+        print_image(image_raw)
+        pool = set(tiles.keys()) - {tile_id}
+        constraints = get_current_neighbours(image_raw, (x,y))
+        missing = get_missing_positions(image_raw, (x,y))
+        (tile_id, o_num), neighbours = get_all_neighbours(orientations, constraints, pool, missing)
+        image_raw[x][y] = tiles[tile_id][o_num]
+        image_tiles[x][y] = (tile_id, o_num)
+        neighbour_coords = get_valid_neighbour_coords(image_raw, (x,y))
+        for i,m in enumerate(missing):
+            if i == 0:
+                x,y = neighbour_coords[m]
+                tile_id, tile = neighbours[m]
+            x_,y_ = neighbour_coords[m]
+            tile_id_, tile_ = neighbours[m]
+            image_raw[x_][y_] = tile_
+            image_tiles[x_][y_] = (tile_id_, get_tile_onum(tile_id_, tile_))
 
-#print('\n'.join(pic))
-
-nessie1 = '                  # '
-nessie2 = '#    ##    ##    ###'
-nessie3 = ' #  #  #  #  #  #   '
-rowlen = len(pic[0])
-
-pic_orientations = [pic]
-for ops in op_types:
-    mod = modify(pic, ops)
-    if mod not in pic_orientations:
-        pic_orientations.append(mod)
-sep = '\n'
-sep = 'B'
-
-nessies = [nessie1, nessie2, nessie3]
-nessie_regexes = []
-for i in range((rowlen+1-len(nessie1))):
-    nessie_regex = []
-    for nessie in nessies:
-        nessie_regex.append(i * '.' + nessie.replace(' ', '.') + '.' * (rowlen-len(nessie1)-i))
-    nessie_regexes.append(sep.join(nessie_regex))
-#print('***\n' + '\n\n'.join(nessie_regexes) + '\n***')
-
-print()
-
-#pic_orientations = [
-#""".####...#####..#...###..
-######..#..#.#.####..#.#.
-#.#.#...#.###...#.##.O#..
-##.O.##.OO#.#.OO.##.OOO##
-#..#O.#O#.O##O..O.#O##.##
-#...#.#..##.##...#..#..##
-##.##.#..#.#..#..##.#.#..
-#.###.##.....#...###.#...
-##.####.#.#....##.#..#.#.
-###...#..#....#..#...####
-#..#.##...###..#.#####..#
-#....#.##.#.#####....#...
-#..##.##.###.....#.##..#.
-##...#...###..####....##.
-#.#.##...#.##.#.#.###...#
-##.###.#..####...##..#...
-##.###...#.##...#.##O###.
-#.O##.#OO.###OO##..OOO##.
-#..O#.O..O..O.#O##O##.###
-##.#..##.########..#..##.
-##.#####..#.#...##..#....
-##....##..#.#########..##
-##...#.....#..##...###.##
-##..###....##.#...##.##.#""".replace('O', '#').split()]
-
-nessie_counts = []
-# oh god why did i do it this inefficiently
-for pic in pic_orientations:
-    num_nessies = 0
-    for regex in nessie_regexes:
-        p = sep.join(pic)
-        #if not p.startswith('.####...#..#.##..#..###.'):
-        if not p.startswith('.####...#####..#...###..'):
-            continue
-        compiled = re.compile(regex, flags=re.MULTILINE)
-        for i in range(len(p)-len(regex)):
-            if compiled.match(p):
-                num_nessies += 1
-            p = p[1:]
-    nessie_counts.append(num_nessies)
-
-print(max(nessie_counts))
+part2(image_raw, image_tiles, tile_id, tile)
