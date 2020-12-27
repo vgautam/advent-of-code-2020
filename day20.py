@@ -5,6 +5,7 @@ from functools import reduce
 from collections import defaultdict
 import numpy as np
 from math import sqrt
+import re
 
 day=20 # update me
 inp_f = f'2020day{day:02d}input'
@@ -13,15 +14,15 @@ inp_f = 'test'
 op_types = set(product(['r1', 'r2', 'r3'], ['vf', 'hf'])) | set(product(['vf', 'hf'], ['r1', 'r2', 'r3'])) | {('vf',), ('hf',), ('r1',), ('r2',), ('r3',)}
 
 def modify(tile, ops):
-    new_tile = tile
+    new_tile = [t for t in tile]
     for op in ops:
         if 'r' in op:
             for i in range(int(op.split('r')[1])):
-                return [''.join(t) for t in np.rot90([list(t) for t in tile])]
+                new_tile = [''.join(t) for t in np.rot90([list(t) for t in new_tile])]
         elif op == 'vf':
-            return tile[::-1]
+            new_tile =  [t for t in new_tile[::-1]]
         elif op == 'hf':
-            return [t[::-1] for t in tile]
+            new_tile = [t[::-1] for t in new_tile]
     return new_tile
 
 #   1
@@ -88,6 +89,7 @@ def get_neighbours(tiles, orientations, pool, missing_neighbours):
         found_neighbours = [i for i,c in enumerate(orientation_neighbours) if c is not None]
         neighbour_tiles = [x[0] for x in orientation_neighbours if x]
         assert len(neighbour_tiles) == len(set(neighbour_tiles))
+        print(missing_neighbours, found_neighbours)
         if [i for i in missing_neighbours if i in found_neighbours] == missing_neighbours:
             res.append((orientation, orientation_neighbours))
     return res
@@ -122,21 +124,22 @@ for (x,y) in product(range(img_ht), range(img_ht)):
     orientations = tiles[tile]
     if image_raw[x][y]:
         orientations = [image_raw[x][y]]
+    print(image_tiles)
     if len(accounted_for) == len(tiles):
         break
     accounted_for.add(tile)
-    pool = set(tiles.keys()) - {tile}# - accounted_for
+    pool = set(tiles.keys()) - {tile}
     missing_neighbours = get_missing_neighbours(image_raw, (x,y))
     try:
         neighbour_opts = get_neighbours(tiles, orientations, pool, missing_neighbours)
         orientation, neighbours = neighbour_opts[0][0], neighbour_opts[0][1]
-    except TypeError:
+    except IndexError:
         print('ERROR')
         #print(orientations)
         #print(pool)
         #print([tiles[p] for p in pool])
         #print(missing_neighbours)
-        raise TypeError
+        raise IndexError
     image_raw[x][y] = orientation
     image_tiles[x][y] = tile
     # fugly, clean up later
@@ -164,11 +167,72 @@ for row in image:
     for i in range(len(row[0])):
         pic.append(''.join([tile[i] for tile in row]))
 
-print([l for l in pic])
+#print('\n'.join(pic))
+
 nessie1 = '                  # '
 nessie2 = '#    ##    ##    ###'
 nessie3 = ' #  #  #  #  #  #   '
+rowlen = len(pic[0])
 
-# reuse vflip, hflip and rotate
-# find sea monsters
-# return the max num of sea monsters
+pic_orientations = [pic]
+for ops in op_types:
+    mod = modify(pic, ops)
+    if mod not in pic_orientations:
+        pic_orientations.append(mod)
+sep = '\n'
+sep = 'B'
+
+nessies = [nessie1, nessie2, nessie3]
+nessie_regexes = []
+for i in range((rowlen+1-len(nessie1))):
+    nessie_regex = []
+    for nessie in nessies:
+        nessie_regex.append(i * '.' + nessie.replace(' ', '.') + '.' * (rowlen-len(nessie1)-i))
+    nessie_regexes.append(sep.join(nessie_regex))
+#print('***\n' + '\n\n'.join(nessie_regexes) + '\n***')
+
+print()
+
+#pic_orientations = [
+#""".####...#####..#...###..
+######..#..#.#.####..#.#.
+#.#.#...#.###...#.##.O#..
+##.O.##.OO#.#.OO.##.OOO##
+#..#O.#O#.O##O..O.#O##.##
+#...#.#..##.##...#..#..##
+##.##.#..#.#..#..##.#.#..
+#.###.##.....#...###.#...
+##.####.#.#....##.#..#.#.
+###...#..#....#..#...####
+#..#.##...###..#.#####..#
+#....#.##.#.#####....#...
+#..##.##.###.....#.##..#.
+##...#...###..####....##.
+#.#.##...#.##.#.#.###...#
+##.###.#..####...##..#...
+##.###...#.##...#.##O###.
+#.O##.#OO.###OO##..OOO##.
+#..O#.O..O..O.#O##O##.###
+##.#..##.########..#..##.
+##.#####..#.#...##..#....
+##....##..#.#########..##
+##...#.....#..##...###.##
+##..###....##.#...##.##.#""".replace('O', '#').split()]
+
+nessie_counts = []
+# oh god why did i do it this inefficiently
+for pic in pic_orientations:
+    num_nessies = 0
+    for regex in nessie_regexes:
+        p = sep.join(pic)
+        #if not p.startswith('.####...#..#.##..#..###.'):
+        if not p.startswith('.####...#####..#...###..'):
+            continue
+        compiled = re.compile(regex, flags=re.MULTILINE)
+        for i in range(len(p)-len(regex)):
+            if compiled.match(p):
+                num_nessies += 1
+            p = p[1:]
+    nessie_counts.append(num_nessies)
+
+print(max(nessie_counts))
