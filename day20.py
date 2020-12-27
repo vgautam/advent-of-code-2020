@@ -9,7 +9,7 @@ import re
 
 day=20 # update me
 inp_f = f'2020day{day:02d}input'
-inp_f = 'test'
+#inp_f = 'test'
 
 #   0
 # 3 [] 1
@@ -185,7 +185,7 @@ def part2(image_raw, image_tiles, tile_ident, tile):
             tile = image_raw[x][y]
             tile_id, o_num = image_tiles[x][y]
         orientations = [(tile_id, o_num)]
-        print_image(image_raw)
+        #print_image(image_raw)
         pool = set(tiles.keys()) - {tile_id}
         constraints = get_current_neighbours(image_raw, (x,y))
         missing = get_missing_positions(image_raw, (x,y))
@@ -203,3 +203,61 @@ def part2(image_raw, image_tiles, tile_ident, tile):
             image_tiles[x_][y_] = (tile_id_, get_tile_onum(tile_id_, tile_))
 
 part2(image_raw, image_tiles, tile_id, tile)
+
+# it's all bad code after here
+
+image = []
+for row_raw in image_raw:
+    row = []
+    for t_raw in row_raw:
+        tile = []
+        for t_row in t_raw[1:-1]: # oof, this fucking naming
+            tile.append(t_row[1:-1])
+        row.append(tile)
+    image.append(row)
+
+pic = []
+for row in image:
+    for i in range(len(row[0])):
+        pic.append(''.join([tile[i] for tile in row]))
+
+#print('\n'.join(pic))
+
+nessie1 = '                  # '
+nessie2 = '#    ##    ##    ###'
+nessie3 = ' #  #  #  #  #  #   '
+rowlen = len(pic[0])
+
+pic_orientations = [pic]
+for ops in op_types:
+    mod = modify(pic, ops)
+    if mod not in pic_orientations:
+        pic_orientations.append(mod)
+sep = '\n'
+sep = 'B'
+
+nessies = [nessie1, nessie2, nessie3]
+nessie_octothorpes = sum([n.count('#') for n in nessies])
+nessie_regexes = []
+for i in range((rowlen+1-len(nessie1))):
+    nessie_regex = []
+    for nessie in nessies:
+        nessie_regex.append(i * '.' + nessie.replace(' ', '.') + '.' * (rowlen-len(nessie1)-i))
+    nessie_regexes.append(sep.join(nessie_regex))
+#print('***\n' + '\n\n'.join(nessie_regexes) + '\n***')
+
+nessie_counts = []
+# oh god why did i do it this inefficiently
+for pic in pic_orientations:
+    num_nessies = 0
+    for regex in nessie_regexes:
+        p = sep.join(pic)
+        compiled = re.compile(regex, flags=re.MULTILINE)
+        for i in range(len(p)-len(regex)):
+            if compiled.match(p):
+                num_nessies += 1
+            p = p[1:]
+    nessie_counts.append(num_nessies)
+
+print(nessie_counts)
+print(sep.join(pic).count('#') - max(nessie_counts)*nessie_octothorpes)
