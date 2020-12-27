@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# please, if you want to maintain some level of respect for me, do not look at this
+
 from itertools import product
 from itertools import combinations
 from functools import reduce
@@ -44,6 +46,7 @@ for t in tiles_raw:
         alt_tile = modify(tile, ops)
         if alt_tile not in tiles[tile_id]:
             tiles[tile_id].append(alt_tile)
+    print(len(tiles[tile_id]))
 
 def get_tiles(tiles, num_matching):
     candidate_corners = {}
@@ -89,8 +92,8 @@ def get_neighbours(tiles, orientations, pool, missing_neighbours):
         found_neighbours = [i for i,c in enumerate(orientation_neighbours) if c is not None]
         neighbour_tiles = [x[0] for x in orientation_neighbours if x]
         assert len(neighbour_tiles) == len(set(neighbour_tiles))
-        print(missing_neighbours, found_neighbours)
         if [i for i in missing_neighbours if i in found_neighbours] == missing_neighbours:
+            print(missing_neighbours, found_neighbours)
             res.append((orientation, orientation_neighbours))
     return res
 
@@ -117,7 +120,6 @@ img_ht = int(sqrt(len(tiles)))
 image_tiles = [[None for i in range(img_ht)] for j in range(img_ht)]
 image_raw = [[None for i in range(img_ht)] for j in range(img_ht)]
 tile = list(candidate_corners.keys())[0]
-accounted_for = set()
 for (x,y) in product(range(img_ht), range(img_ht)):
     if image_raw[x][y]:
         tile = image_tiles[x][y]
@@ -125,32 +127,49 @@ for (x,y) in product(range(img_ht), range(img_ht)):
     if image_raw[x][y]:
         orientations = [image_raw[x][y]]
     print(image_tiles)
-    if len(accounted_for) == len(tiles):
-        break
-    accounted_for.add(tile)
     pool = set(tiles.keys()) - {tile}
     missing_neighbours = get_missing_neighbours(image_raw, (x,y))
-    try:
-        neighbour_opts = get_neighbours(tiles, orientations, pool, missing_neighbours)
-        orientation, neighbours = neighbour_opts[0][0], neighbour_opts[0][1]
-    except IndexError:
-        print('ERROR')
-        #print(orientations)
-        #print(pool)
-        #print([tiles[p] for p in pool])
-        #print(missing_neighbours)
-        raise IndexError
+    grrr = False
+    nb_i = 0
+    neighbour_opts = get_neighbours(tiles, orientations, pool, missing_neighbours)
+    while not grrr:
+        try:
+            orientation, neighbours = neighbour_opts[nb_i][0], neighbour_opts[nb_i][1]
+        except IndexError:
+            print('ERROR')
+            print('nbi', nb_i)
+            #print(orientations)
+            print(tile, pool)
+            #print([tiles[p] for p in pool])
+            #print(missing_neighbours)
+            raise IndexError
+        neighbour_coords = get_neighbour_coords((x,y))
+        print(neighbour_coords)
+        grrrs = []
+        for direction, (a,b) in enumerate(neighbour_coords):
+            if not valid(image_raw, (a,b)):
+                continue
+            nbd = neighbours[direction]
+            print(neighbours)
+            if neighbours[direction] is None or (image_tiles[a][b] is not None and nbd != image_tiles[a][b]):
+                print('grrr', tile, nbd)
+                grrrs.append(True) # why am i like this
+        if not any(grrrs):
+            print('no grrrs!')
+            break
+        nb_i += 1
     image_raw[x][y] = orientation
     image_tiles[x][y] = tile
-    # fugly, clean up later
-    # 2 hrs later: This entire file is nasty. Clean it tf up (or throw it out?)
     for i,direction in enumerate(missing_neighbours):
         if i == 0:
             tile = neighbours[direction][0]
         (x_, y_) = get_neighbour_coords((x,y), direction=direction)
+        #print('ruh roh', image_tiles[x][y], neighbours)
         image_tiles[x_][y_] = neighbours[direction][0]
         image_raw[x_][y_] = neighbours[direction][1]
-        accounted_for.add(neighbours[direction][0])
+
+        # fugly, clean up later
+        # 2 hrs later: This entire file is nasty. Clean it tf up (or throw it out?)
 
 image = []
 for row_raw in image_raw:
